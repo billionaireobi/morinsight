@@ -2,8 +2,6 @@ from rest_framework import serializers
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate
 from .models import UserProfile
-from rest_framework_simplejwt.tokens import RefreshToken
-import uuid
 import re
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -42,9 +40,11 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, data):
         user = authenticate(**data)
-        if user and user.is_active:
-            return user
-        raise serializers.ValidationError("Invalid credentials")
+        if not user:
+            raise serializers.ValidationError("Invalid credentials")
+        if not user.is_active:
+            raise serializers.ValidationError("Account not verified. Please check your email.")
+        return user
 
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
@@ -67,6 +67,8 @@ class SocialLoginSerializer(serializers.Serializer):
     access_token = serializers.CharField()
 
     def validate(self, data):
+        if not data.get('access_token'):
+            raise serializers.ValidationError("Access token is required")
         return data
 
 class EmailLoginSerializer(serializers.Serializer):
@@ -82,6 +84,10 @@ class EmailLoginVerifySerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate(self, data):
+        if not data.get('token'):
+            raise serializers.ValidationError("Token is required")
+        if not data.get('email'):
+            raise serializers.ValidationError("Email is required")
         return data
 
 class EmailVerificationSerializer(serializers.Serializer):
@@ -89,6 +95,10 @@ class EmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate(self, data):
+        if not data.get('token'):
+            raise serializers.ValidationError("Token is required")
+        if not data.get('email'):
+            raise serializers.ValidationError("Email is required")
         return data
 
 class ForgotPasswordSerializer(serializers.Serializer):
