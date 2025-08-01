@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib.auth import authenticate
 from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -125,6 +126,36 @@ class EmailVerificationView(APIView):
             logger.error(f"Unexpected error in EmailVerificationView: {str(e)}")
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# class LoginView(CreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = LoginSerializer
+
+#     @rate_limit(key='ip', rate='50/h')
+#     def create(self, request, *args, **kwargs):
+#         try:
+#             serializer = self.get_serializer(data=request.data)
+#             if not serializer.is_valid():
+#                 raise APIError("Invalid credentials")
+#             user = serializer.validated_data
+#             refresh = RefreshToken.for_user(user)
+#             return Response({
+#                 "refresh": str(refresh),
+#                 "access": str(refresh.access_token),
+#                 "user": {
+#                     "username": user.username,
+#                     "email": user.email,
+#                     "profile_type": user.userprofile.profile_type,
+#                     "is_management": user.userprofile.is_management(),
+#                     "is_client": user.userprofile.is_client()
+#                 }
+#             }, status=status.HTTP_200_OK)
+#         except APIError as e:
+#             return Response({"error": e.message}, status=e.status_code)
+#         except Exception as e:
+#             logger.error(f"Unexpected error in LoginView: {str(e)}")
+#             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class LoginView(CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
@@ -132,10 +163,29 @@ class LoginView(CreateAPIView):
     @rate_limit(key='ip', rate='50/h')
     def create(self, request, *args, **kwargs):
         try:
-            serializer = self.get_serializer(data=request.data)
-            if not serializer.is_valid():
-                raise APIError("Invalid credentials")
-            user = serializer.validated_data
+            # Get username/email and password from request
+            username_or_email = request.data.get('username') or request.data.get('email')
+            password = request.data.get('password')
+
+            if not username_or_email or not password:
+                return Response({"error": "Username/Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if input is an email and fetch username
+            if '@' in username_or_email:
+                try:
+                    user_obj = User.objects.get(email=username_or_email)
+                    username = user_obj.username
+                except User.DoesNotExist:
+                    return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                username = username_or_email
+
+            # Authenticate user
+            user = authenticate(username=username, password=password)
+            if user is None:
+                return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             return Response({
                 "refresh": str(refresh),
@@ -148,8 +198,7 @@ class LoginView(CreateAPIView):
                     "is_client": user.userprofile.is_client()
                 }
             }, status=status.HTTP_200_OK)
-        except APIError as e:
-            return Response({"error": e.message}, status=e.status_code)
+
         except Exception as e:
             logger.error(f"Unexpected error in LoginView: {str(e)}")
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

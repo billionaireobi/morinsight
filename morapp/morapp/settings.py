@@ -1,14 +1,19 @@
 from pathlib import Path
 from datetime import timedelta
+import os
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-sw8zlor!&!*r7k1c@__+81fw&x*t325_nkg2&p3(j#7p^@0&g6'
-
 DEBUG = True
+# ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
-ALLOWED_HOSTS = ["e0163f85d8f0.ngrok-free.app","127.0.0.1"]  # Update for production
-CSRF_TRUSTED_ORIGINS = ["https://e0163f85d8f0.ngrok-free.app"]
+ALLOWED_HOSTS = ["564f795cf40f.ngrok-free.app", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["https://564f795cf40f.ngrok-free.app"]
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -22,6 +27,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'social_django',
+    'django_filters',
+    'dashboard',
+    'drf_yasg',
+    # 'django_cleanup.apps.CleanupConfig',  # Uncomment if needed
 ]
 
 MIDDLEWARE = [
@@ -33,6 +42,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dashboard.middleware.UserActivityMiddleware',
+    'dashboard.middleware.SecurityHeadersMiddleware',
 ]
 
 ROOT_URLCONF = 'morapp.urls'
@@ -40,7 +51,7 @@ ROOT_URLCONF = 'morapp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -56,6 +67,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'morapp.wsgi.application'
 
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -72,6 +84,7 @@ DATABASES = {
     # }
 }
 
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -79,6 +92,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -86,8 +100,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 12,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
+# JWT settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -96,33 +114,74 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+# CORS settings
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'https://yourdomain.com',  # Update for production
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# Social authentication
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your-google-client-id'
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your-google-client-secret'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your-google-client-id'  # Replace with your actual Google OAuth2 key
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your-google-client-secret'  # Replace with your actual Google OAuth2 secret
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['email', 'profile']
 SOCIAL_AUTH_REDIRECT_URI = 'http://localhost:3000/auth/google/callback'
 
-# EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-EMAIL_HOST = 'mail.yourdomain.com'
+# Email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'auth@yourdomain.com'
-EMAIL_HOST_PASSWORD = 'your-email-password'
-DEFAULT_FROM_EMAIL = 'auth@yourdomain.com'
+EMAIL_HOST_USER = 'your_email@gmail.com'  # Replace with your actual Gmail address
+EMAIL_HOST_PASSWORD = 'your_app_specific_password'  # Replace with your Gmail app-specific password
+DEFAULT_FROM_EMAIL = 'noreply@yourcompany.com'
+
+# Payment Gateway Settings
+MPESA_ENVIRONMENT = 'sandbox'
+MPESA_CONSUMER_KEY = 'your_mpesa_consumer_key'  # Replace with your actual key
+MPESA_CONSUMER_SECRET = 'your_mpesa_consumer_secret'  # Replace with your actual secret
+MPESA_SHORTCODE = 'your_mpesa_shortcode'  # Replace with your actual shortcode
+MPESA_PASSKEY = 'your_mpesa_passkey'  # Replace with your actual passkey
+MPESA_CALLBACK_URL = 'https://e0163f85d8f0.ngrok-free.app/api/client/mpesa/callback/'
+STRIPE_PUBLISHABLE_KEY = 'your_stripe_publishable_key'  # Replace with your actual key
+STRIPE_SECRET_KEY = 'your_stripe_secret_key'  # Replace with your actual key
+PAYSTACK_SECRET_KEY = 'your_paystack_secret_key'  # Replace with your actual key
 FRONTEND_URL = 'http://localhost:3000'
 
+# File Upload Settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+ALLOWED_REPORT_EXTENSIONS = ['.pdf']
+ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+MAX_REPORT_FILE_SIZE_MB = 50
+MAX_IMAGE_FILE_SIZE_MB = 10
+
+# Security Settings for Reports
+SECURE_FILE_UPLOADS = True
+ENABLE_WATERMARKING = True
+WATERMARK_TEXT_TEMPLATE = 'Licensed to: {user_name} | {user_email}'
+DISABLE_RIGHT_CLICK = True
+DISABLE_COPY_PASTE = True
+DOWNLOAD_TOKEN_EXPIRY_HOURS = 24
+
+# Business Logic Settings
+DEFAULT_REPORT_CATEGORY = 'General'
+FEATURED_REPORTS_COUNT = 6
+RECENT_REPORTS_COUNT = 12
+ORDER_EXPIRY_MINUTES = 30
+MAX_REPORTS_PER_ORDER = 10
+SUPPORTED_PAYMENT_METHODS = ['mpesa', 'card', 'paystack']
+DEFAULT_CURRENCY = 'KES'
+CURRENCY_SYMBOL = 'KES'
+ANALYTICS_RETENTION_DAYS = 365
+DASHBOARD_REFRESH_INTERVAL = 300
+
+# Cache settings
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
@@ -130,16 +189,29 @@ CACHES = {
     }
 }
 
+# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'debug.log',
+            'filename': BASE_DIR / 'logs' / 'dashboard.log',  # Updated to correct path
+            'formatter': 'verbose',
         },
     },
     'loggers': {
@@ -148,22 +220,52 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'dashboard': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'payments': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
     },
 }
 
+# Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Security settings
 SECURE_SSL_REDIRECT = False if DEBUG else True
 CSRF_COOKIE_SECURE = False if DEBUG else True
 SESSION_COOKIE_SECURE = False if DEBUG else True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Additional security settings for production
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    SECURE_FILE_UPLOADS = False

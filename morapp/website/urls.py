@@ -5,7 +5,7 @@ from .views import (
     EmailLoginView, EmailLoginVerifyView, ManageUserProfileView,
     EmailVerificationView, ForgotPasswordView, ResetPasswordView
 )
-
+app_name = 'website'
 urlpatterns = [
     path('api/auth/register/', RegisterView.as_view(), name='register'),
     path('api/auth/verify-email/', EmailVerificationView.as_view(), name='email_verification'),

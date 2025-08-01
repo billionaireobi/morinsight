@@ -1,0 +1,101 @@
+Found 10 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: admin, auth, contenttypes, sessions, social_django, token_blacklist, website
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying sessions.0001_initial... OK
+  Applying social_django.0001_initial... OK
+  Applying social_django.0002_add_related_name... OK
+  Applying social_django.0003_alter_email_max_length... OK
+  Applying social_django.0004_auto_20160423_0400... OK
+  Applying social_django.0005_auto_20160727_2333... OK
+  Applying social_django.0006_partial... OK
+  Applying social_django.0007_code_timestamp... OK
+  Applying social_django.0008_partial_timestamp... OK
+  Applying social_django.0009_auto_20191118_0520... OK
+  Applying social_django.0010_uid_db_index... OK
+  Applying social_django.0011_alter_id_fields... OK
+  Applying social_django.0012_usersocialauth_extra_data_new... OK
+  Applying social_django.0013_migrate_extra_data... OK
+  Applying social_django.0014_remove_usersocialauth_extra_data... OK
+  Applying social_django.0015_rename_extra_data_new_usersocialauth_extra_data... OK
+  Applying social_django.0016_alter_usersocialauth_extra_data... OK
+  Applying social_django.0017_usersocialauth_user_social_auth_uid_required... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more... OK
+  Applying website.0001_initial... OK
+  Applying website.0002_delete_report... OK
+  Applying website.0003_alter_userprofile_join_date_and_more... OK
+  Applying website.0004_report_reportcategory_order_orderitem_and_more... OK
+  Applying website.0005_alter_order_order_number... OK
+  Applying website.0006_report_slug... OK
+System check identified no issues (0 silenced).
+test_email_login: after register, mail.outbox length=1
+test_email_login: after verify, mail.outbox length=1
+test_email_login: after email login, mail.outbox length=2
+test_email_login_verify: after register, mail.outbox length=1
+test_email_login_verify: after verify, mail.outbox length=1
+test_email_login_verify: after email login, mail.outbox length=2
+test_email_login_verify: after verify login, mail.outbox length=2
+test_forgot_password: after register, mail.outbox length=1
+test_forgot_password: after verify, mail.outbox length=1
+test_forgot_password: after forgot password, mail.outbox length=2
+test_login: after register, mail.outbox length=1
+test_login: after verify, mail.outbox length=1
+test_login: after login, mail.outbox length=1
+test_logout: after register, mail.outbox length=1
+test_logout: after verify, mail.outbox length=1
+test_logout: after logout, mail.outbox length=1
+test_profile: after register, mail.outbox length=1
+test_profile: after verify, mail.outbox length=1
+Profile GET response: 200 {'username': 'testuser', 'email': 'test@example.com', 'phone': None, 'profile_type': 'Client', 'join_date': '2025-08-01T15:57:01.408403+03:00', 'gender': None, 'is_management': False, 'is_client': True}
+Profile PUT response: 200 {'username': 'testuser', 'email': 'test@example.com', 'phone': '+1234567890', 'profile_type': 'Client', 'join_date': '2025-08-01T15:57:01.408403+03:00', 'gender': None, 'is_management': False, 'is_client': True}
+test_register: mail.outbox length=1
+test_register_rate_limit: request 1, mail.outbox length=1
+test_register_rate_limit: request 2, mail.outbox length=2
+test_register_rate_limit: request 3, mail.outbox length=3
+test_register_rate_limit: request 4, mail.outbox length=4
+test_register_rate_limit: request 5, mail.outbox length=5
+test_register_rate_limit: request 6, mail.outbox length=6
+test_register_rate_limit: request 7, mail.outbox length=7
+test_register_rate_limit: request 8, mail.outbox length=8
+test_register_rate_limit: request 9, mail.outbox length=9
+test_register_rate_limit: request 10, mail.outbox length=10
+test_register_rate_limit: 11th request, status=429, mail.outbox length=10
+test_reset_password: after register, mail.outbox length=1
+test_reset_password: after verify, mail.outbox length=1
+test_reset_password: after forgot password, mail.outbox length=2
+test_reset_password: after reset password, mail.outbox length=2
+test_reset_password: after login, mail.outbox length=2
+test_verify_email: after register, mail.outbox length=1
+test_verify_email: after verify, mail.outbox length=1

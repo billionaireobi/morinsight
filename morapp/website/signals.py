@@ -24,13 +24,22 @@ def create_groups_and_permissions(sender, **kwargs):
     # Create and assign can_change_profile_type permission
     try:
         content_type = ContentType.objects.get(app_label='website', model='userprofile')
-        can_change_profile_type, created = Permission.objects.get_or_create(
+        # Check if permission exists before creating
+        can_change_profile_type = Permission.objects.filter(
             codename='can_change_profile_type',
-            name='Can change profile type',
             content_type=content_type
-        )
+        ).first()
+        if not can_change_profile_type:
+            can_change_profile_type = Permission.objects.create(
+                codename='can_change_profile_type',
+                name='Can change profile type',
+                content_type=content_type
+            )
+            logger.info("Created 'can_change_profile_type' permission")
+        else:
+            logger.info("Permission 'can_change_profile_type' already exists")
         management_group.permissions.add(can_change_profile_type)
-        logger.info(f"{'Created' if created else 'Assigned'} 'can_change_profile_type' permission to Management group")
+        logger.info("Assigned 'can_change_profile_type' permission to Management group")
     except ContentType.DoesNotExist as e:
         logger.warning(f"Could not assign 'can_change_profile_type' permission: ContentType does not exist: {e}")
     except Exception as e:
