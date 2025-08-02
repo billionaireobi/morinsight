@@ -6,7 +6,7 @@ app_name = 'dashboard'
 
 urlpatterns = [
     path('client/', views.ClientDashboardView.as_view(), name='client_dashboard'),
-    path('admin/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('admin/', views.ClientDashboardView.as_view(), name='admin_dashboard'),
     path('reports/', views.ReportListView.as_view(), name='report_list'),
     path('reports/<int:report_id>/', views.ReportDetailView.as_view(), name='report_detail'),
     path('orders/create/', views.CreateOrderView.as_view(), name='create_order'),

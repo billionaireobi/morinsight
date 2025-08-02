@@ -18,6 +18,8 @@ from .models import UserProfile
 import uuid
 from django.core.cache import cache
 from rest_framework.permissions import BasePermission
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from .utils import rate_limit
 import logging
 
@@ -42,6 +44,15 @@ class RegisterView(CreateAPIView):
     serializer_class = RegisterSerializer
 
     @rate_limit(key='ip', rate='10/h')
+    @swagger_auto_schema(
+        operation_description="Register a new user. Sends verification email on success.",
+        request_body=RegisterSerializer,
+        responses={
+            201: openapi.Response('Registration successful', RegisterSerializer),
+            400: 'Invalid input data',
+            500: 'Unexpected error'
+        }
+    )
     def create(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
@@ -86,6 +97,15 @@ class EmailVerificationView(APIView):
     serializer_class = EmailVerificationSerializer
 
     @rate_limit(key='ip', rate='50/h')
+    @swagger_auto_schema(
+        operation_description="Verify a user's email address using a token.",
+        request_body=EmailVerificationSerializer,
+        responses={
+            200: 'Email verified successfully',
+            400: 'Invalid or expired token',
+            500: 'Unexpected error'
+        }
+    )
     def post(self, request):
         try:
             serializer = self.serializer_class(data=request.data)
@@ -161,6 +181,15 @@ class LoginView(CreateAPIView):
     serializer_class = LoginSerializer
 
     @rate_limit(key='ip', rate='50/h')
+    @swagger_auto_schema(
+        operation_description="Authenticate user with username/email and password. Returns JWT tokens.",
+        request_body=LoginSerializer,
+        responses={
+            200: openapi.Response('Login successful', LoginSerializer),
+            400: 'Invalid credentials or missing fields',
+            500: 'Unexpected error'
+        }
+    )
     def create(self, request, *args, **kwargs):
         try:
             # Get username/email and password from request
@@ -213,6 +242,14 @@ class ProfileView(RetrieveUpdateAPIView):
         except UserProfile.DoesNotExist:
             raise APIError("User profile not found", status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+        operation_description="Retrieve the authenticated user's profile.",
+        responses={
+            200: openapi.Response('User profile', UserProfileSerializer),
+            404: 'User profile not found',
+            500: 'Unexpected error'
+        }
+    )
     def get(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -224,6 +261,16 @@ class ProfileView(RetrieveUpdateAPIView):
             logger.error(f"Unexpected error in ProfileView.get: {str(e)}")
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @swagger_auto_schema(
+        operation_description="Update the authenticated user's profile.",
+        responses={
+            200: openapi.Response('Profile updated', UserProfileSerializer),
+            400: 'Invalid input data',
+            403: 'Permission denied',
+            404: 'User profile not found',
+            500: 'Unexpected error'
+        }
+    )
     def update(self, request, *args, **kwargs):
         try:
             partial = kwargs.pop('partial', False)
@@ -244,6 +291,15 @@ class ProfileView(RetrieveUpdateAPIView):
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Logout user by blacklisting the refresh token.",
+        responses={
+            205: 'Successfully logged out',
+            400: 'Bad request or unexpected error',
+            401: 'Authentication credentials were not provided',
+            403: 'Invalid or expired token'
+        }
+    )
     def post(self, request):
         try:
             refresh_token = request.data.get('refresh')
@@ -262,6 +318,16 @@ class GoogleLoginView(APIView):
     permission_classes = [AllowAny]
 
     @rate_limit(key='ip', rate='50/h')
+    @swagger_auto_schema(
+        operation_description="Authenticate user via Google OAuth2. Returns JWT tokens.",
+        request_body=SocialLoginSerializer,
+        responses={
+            200: 'Login successful',
+            400: 'Invalid access token',
+            403: 'Account not verified',
+            500: 'Unexpected error'
+        }
+    )
     def post(self, request):
         try:
             serializer = SocialLoginSerializer(data=request.data)
@@ -295,6 +361,17 @@ class EmailLoginView(APIView):
     permission_classes = [AllowAny]
 
     @rate_limit(key='ip', rate='10/h')
+    @swagger_auto_schema(
+        operation_description="Send a login link to the user's email address.",
+        request_body=EmailLoginSerializer,
+        responses={
+            200: 'Login link sent',
+            400: 'Invalid email',
+            403: 'Account not verified',
+            404: 'No user found with this email',
+            500: 'Unexpected error'
+        }
+    )
     def post(self, request):
         try:
             serializer = EmailLoginSerializer(data=request.data)
@@ -333,6 +410,17 @@ class EmailLoginVerifyView(APIView):
     permission_classes = [AllowAny]
 
     @rate_limit(key='ip', rate='50/h')
+    @swagger_auto_schema(
+        operation_description="Verify email login using token and email. Returns JWT tokens.",
+        request_body=EmailLoginVerifySerializer,
+        responses={
+            200: 'Login successful',
+            400: 'Invalid or expired token',
+            403: 'Account not verified',
+            404: 'User profile not found',
+            500: 'Unexpected error'
+        }
+    )
     def post(self, request):
         try:
             serializer = EmailLoginVerifySerializer(data=request.data)
@@ -374,6 +462,17 @@ class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
 
     @rate_limit(key='ip', rate='10/h')
+    @swagger_auto_schema(
+        operation_description="Send a password reset link to the user's email address.",
+        request_body=ForgotPasswordSerializer,
+        responses={
+            200: 'Password reset link sent',
+            400: 'Invalid email',
+            403: 'Account not verified',
+            404: 'No user found with this email',
+            500: 'Unexpected error'
+        }
+    )
     def post(self, request):
         try:
             serializer = ForgotPasswordSerializer(data=request.data)
@@ -412,6 +511,17 @@ class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
     @rate_limit(key='ip', rate='10/h')
+    @swagger_auto_schema(
+        operation_description="Reset the user's password using a token.",
+        request_body=ResetPasswordSerializer,
+        responses={
+            200: 'Password reset successfully',
+            400: 'Invalid input data',
+            403: 'Account not verified',
+            404: 'User profile not found',
+            500: 'Unexpected error'
+        }
+    )
     def post(self, request):
         try:
             serializer = ResetPasswordSerializer(data=request.data)
@@ -441,24 +551,134 @@ class ResetPasswordView(APIView):
             logger.error(f"Unexpected error in ResetPasswordView: {str(e)}")
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+# class ManageUserProfileView(APIView):
+#     permission_classes = [IsAuthenticated, IsManagement]
+
+#     @swagger_auto_schema(
+#         operation_description="Update another user's profile (admin/management only).",
+#         request_body=ManageUserProfileSerializer,
+#         responses={
+#             200: openapi.Response('Profile updated', ManageUserProfileSerializer),
+#             400: 'Invalid input data',
+#             404: 'User or profile not found',
+#             500: 'Unexpected error'
+#         }
+#     )
+#     def put(self, request, user_id):
+#         try:
+#             user = User.objects.get(id=user_id)
+#             profile = user.userprofile
+#             serializer = ManageUserProfileSerializer(profile, data=request.data, partial=True)
+#             if not serializer.is_valid():
+#                 raise APIError("Invalid input data")
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except User.DoesNotExist:
+#             raise APIError("User not found", status.HTTP_404_NOT_FOUND)
+#         except UserProfile.DoesNotExist:
+#             raise APIError("User profile not found", status.HTTP_404_NOT_FOUND)
+#         except APIError as e:
+#             return Response({"error": e.message}, status=e.status_code)
+#         except Exception as e:
+#             logger.error(f"Unexpected error in ManageUserProfileView: {str(e)}")
+#             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#     # ✅ Add this method
+#     def patch(self, request, user_id):
+#         """
+#         Allows partial updates (PATCH) using the same logic as PUT.
+#         """
+#         return self.put(request, user_id)
 class ManageUserProfileView(APIView):
     permission_classes = [IsAuthenticated, IsManagement]
 
+    @swagger_auto_schema(
+        operation_description="Update another user's profile (admin/management only).",
+        request_body=ManageUserProfileSerializer,
+        responses={
+            200: openapi.Response('Profile updated', ManageUserProfileSerializer),
+            400: 'Invalid input data',
+            404: 'User or profile not found',
+            500: 'Unexpected error'
+        }
+    )
     def put(self, request, user_id):
+        """
+        Full update (requires all required fields).
+        """
+        return self._update_profile(request, user_id, partial=False)
+
+    def patch(self, request, user_id):
+        """
+        Partial update (only send fields you want to change).
+        """
+        return self._update_profile(request, user_id, partial=True)
+
+    def _update_profile(self, request, user_id, partial):
         try:
             user = User.objects.get(id=user_id)
             profile = user.userprofile
-            serializer = ManageUserProfileSerializer(profile, data=request.data, partial=True)
+
+            serializer = ManageUserProfileSerializer(profile, data=request.data, partial=partial)
+
             if not serializer.is_valid():
-                raise APIError("Invalid input data")
+                return Response(
+                    {"error": "Invalid input data", "details": serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+            return Response(
+                {
+                    "message": "Profile updated successfully",
+                    "data": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+
         except User.DoesNotExist:
-            raise APIError("User not found", status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
         except UserProfile.DoesNotExist:
-            raise APIError("User profile not found", status.HTTP_404_NOT_FOUND)
-        except APIError as e:
-            return Response({"error": e.message}, status=e.status_code)
+            return Response({"error": "User profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
             logger.error(f"Unexpected error in ManageUserProfileView: {str(e)}")
-            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": "An unexpected error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# class ManageUserProfileView(APIView):
+#     permission_classes = [IsAuthenticated, IsManagement]
+
+#     @swagger_auto_schema(
+#         operation_description="Update another user's profile (admin/management only).",
+#         request_body=ManageUserProfileSerializer,
+#         responses={
+#             200: openapi.Response('Profile updated', ManageUserProfileSerializer),
+#             400: 'Invalid input data',
+#             404: 'User or profile not found',
+#             500: 'Unexpected error'
+#         }
+#     )
+#     def put(self, request, user_id):
+#         try:
+#             user = User.objects.get(id=user_id)
+#             profile = user.userprofile
+#             serializer = ManageUserProfileSerializer(profile, data=request.data, partial=True)
+#             if not serializer.is_valid():
+#                 raise APIError("Invalid input data")
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except User.DoesNotExist:
+#             raise APIError("User not found", status.HTTP_404_NOT_FOUND)
+#         except UserProfile.DoesNotExist:
+#             raise APIError("User profile not found", status.HTTP_404_NOT_FOUND)
+#         except APIError as e:
+#             return Response({"error": e.message}, status=e.status_code)
+#         except Exception as e:
+#             logger.error(f"Unexpected error in ManageUserProfileView: {str(e)}")
+#             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

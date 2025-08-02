@@ -1,0 +1,189 @@
+
+########
+register new user
+######
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/register/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username": "clientuser",
+    "email": "client@example.com",
+    "password": "ClientPass123"
+  }'
+  #######end register user
+###verify email
+
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/verify-email/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "token": "7b4eb514-1c84-40fa-8180-2d81a50f9b13",
+    "email": "client@example.com"
+  }'
+
+  #####login
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/login/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "client@example.com",
+    "password": "ClientPass123"
+  }'
+####refresh token
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/token/refresh/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1NDIxNTM3NiwiaWF0IjoxNzU0MTI4OTc2LCJqdGkiOiI4YmYzNTIyOWM3OGQ0YjZjOTQ3YmVjZjk4NGFhODA0OCIsInVzZXJfaWQiOiI3In0.O4iPXyU-Cl_nSLIx3MOtidxlbMwtueAPs5hRhNJGatE"
+  }'
+#####user profile
+curl -X GET \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/profile/' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MTMyNzY5LCJpYXQiOjE3NTQxMjkxNjksImp0aSI6IjQwNDc0NzgxMGI0NzQ5MjJiZmU1ZDAyN2ZkMmE5Njc5IiwidXNlcl9pZCI6IjcifQ.RDiTfIBpiWU6ly5c2ddqy2qHbRAPzp3djdZKqL0704A' \
+  -H 'accept: application/json'
+####logout
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/logout/' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MTMyNzY5LCJpYXQiOjE3NTQxMjkxNjksImp0aSI6IjQwNDc0NzgxMGI0NzQ5MjJiZmU1ZDAyN2ZkMmE5Njc5IiwidXNlcl9pZCI6IjcifQ.RDiTfIBpiWU6ly5c2ddqy2qHbRAPzp3djdZKqL0704A' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1NDIxNTU2OSwiaWF0IjoxNzU0MTI5MTY5LCJqdGkiOiIyMmI1NjUzMTA1YjA0ZDJlYWY0ZWUwZDA0Y2VlN2ZjYSIsInVzZXJfaWQiOiI3In0.AJQO3UPj-rQEUGueGqyVvBPcLQcoQdvws2gKJQKpgFQ"
+  }'
+####forgot password
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/forgot-password/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "client@example.com"
+  }'
+####password reset
+curl -X POST \
+  'https://64f7c2b6acc4.ngrok-free.app/api/auth/reset-password/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "client@example.com",
+    "token": "be323be5-f9cf-4918-85c2-ba70bfd74d4d",
+    "new_password": "NewClientPass456"
+  }'
+  ###manageprofiles
+  curl -X PATCH   'https://64f7c2b6acc4.ngrok-free.app/api/auth/manage-profile/7/'  
+   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5
+                             cCI6IkpXVCJ9.eyJ0b2tlbl90eXB
+                             lIjoiYWNjZXNzIiwiZXhwIjoxNzU0M
+                             TMzNTY3LCJpYXQiOjE3NTQxMjk5NjcsI
+                             mp0aSI6IjBiM2I3Y2YzOTYxZTQxZWNiMW
+                             I2MzI4ZmY4Yjk5ZTM1IiwidXNlcl9pZCI6I
+                             jUifQ.fzvv6xJHl5DACKI3HU5vznRc79yKD
+                             IXgDRpA5LB7JiI'   
+    -H 'Content-Type: application/json'   
+    -d '{
+    "username": "updatedClient" 
+  }'
+  ####client reports/dashbaord
+  curl -X GET "https://64f7c2b6acc4.ngrok-free.app/dashboard/client/"   
+  -H "Authorization: Bearer token"   
+  -H "Content-Type: application/json"|jq
+  ####list report 
+  curl -X GET "https://64f7c2b6acc4.ngrok-free.app/dashboard/reports/"   
+  -H "Authorization: Bearer token"   
+  -H "Content-Type: application/json"|jq
+  ###search reports by name 
+  curl -X GET "https://64f7c2b6acc4.ngrok-free.app/dashboard/reports/?search=banking" \
+  -H "Authorization: Bearer token" \
+  -H "Content-Type: application/json"
+####search by category
+curl -X GET "https://64f7c2b6acc4.ngrok-free.app/dashboard/reports/?category=technology" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MTM3MjY4LCJpYXQiOjE3NTQxMzM2NjgsImp0aSI6ImEwZWRkZDNiOTU0OTRhNDI5ZGNkOGE0N2QwNzViOGQ4IiwidXNlcl9pZCI6IjcifQ.CtTojgaYkl5TdsX3TUutSJ6bJWv8mtPtXxPWGcD32hk" \
+  -H "Content-Type: application/json"
+#####report details
+curl -X GET "https://64f7c2b6acc4.ngrok-free.app/dashboard/reports/1/" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MTM3MjY4LCJpYXQiOjE3NTQxMzM2NjgsImp0aSI6ImEwZWRkZDNiOTU0OTRhNDI5ZGNkOGE0N2QwNzViOGQ4IiwidXNlcl9pZCI6IjcifQ.CtTojgaYkl5TdsX3TUutSJ6bJWv8mtPtXxPWGcD32hk" \
+  -H "Content-Type: application/json"
+
+####create order
+curl -X POST "https://64f7c2b6acc4.ngrok-free.app/dashboard/orders/create/" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MTM3MjY4LCJpYXQiOjE3NTQxMzM2NjgsImp0aSI6ImEwZWRkZDNiOTU0OTRhNDI5ZGNkOGE0N2QwNzViOGQ4IiwidXNlcl9pZCI6IjcifQ.CtTojgaYkl5TdsX3TUutSJ6bJWv8mtPtXxPWGcD32hk" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "report_ids": [1, 2]
+  }'
+  #######payment mpesa
+curl -X POST "https://64f7c2b6acc4.ngrok-free.app/dashboard/mpesa/callback/" \                                                                                    
+-H "Content-Type: application/json" \
+-d '{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "12345",
+      "CheckoutRequestID": "ws_CO_020820251656542700000000",
+      "ResultCode": 0,
+      "ResultDesc": "The service request is processed successfully."
+    }
+  }
+}'
+{"ResultCode":0,"ResultDesc":"Accepted"}
+########simulate failed transactions
+curl -X POST "https://64f7c2b6acc4.ngrok-free.app/dashboard/mpesa/callback/" \                                                                                    
+-H "Content-Type: application/json" \
+-d '{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "12345",
+      "CheckoutRequestID": "ws_CO_020820251656542700000000",
+      "ResultCode": 1032,
+      "ResultDesc": "Request cancelled by user"
+    }
+  }
+}'|jq
+###########output
+{
+  "ResultCode": 1,
+  "ResultDesc": "Payment Failed"
+}
+
+
+ curl -X POST "https://64f7c2b6acc4.ngrok-free.app/dashboard/mpesa/callback/" \                                                                                    
+-H "Content-Type: application/json" \
+-d '{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "12345",
+      "CheckoutRequestID": "ws_CO_020820251656542700000000",
+      "ResultCode": 1032,
+      "ResultDesc": "Request cancelled by user"
+    }
+  }
+}'|jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   263  100    46  100   217     29    141  0:00:01  0:00:01 --:--:--   171
+{
+  "ResultCode": 1,
+  "ResultDesc": "Payment Failed"
+}
+
+┌──(nethunter㉿Billionaireobi)-[~]
+└─$ curl -X POST "https://64f7c2b6acc4.ngrok-free.app/dashboard/mpesa/callback/" \                                                                                    
+-H "Content-Type: application/json" \
+-d '{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "12345",
+      "CheckoutRequestID": "NON_EXISTENT_ID_12345",
+      "ResultCode": 0,
+      "ResultDesc": "The service request is processed successfully."
+    }
+  }
+}'|jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   279  100    53  100   226     39    166  0:00:01  0:00:01 --:--:--   206
+{
+  "ResultCode": 1,
+  "ResultDesc": "Transaction not found"
+}

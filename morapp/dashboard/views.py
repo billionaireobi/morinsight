@@ -18,6 +18,8 @@ import os
 import logging
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from reportlab.lib.units import inch
 from io import BytesIO
 import PyPDF2
@@ -46,35 +48,81 @@ class StandardResultsSetPagination(PageNumberPagination):
 # CLIENT DASHBOARD VIEWS
 # ========================================
 
+# class ClientDashboardView(APIView):
+#     permission_classes = [permissions.IsAuthenticated, IsClientUser]
+    
+#     @swagger_auto_schema(
+#         operation_description="Get dashboard summary for the authenticated client user.",
+#         responses={
+#             200: openapi.Response('Dashboard summary', schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+#             401: 'Unauthorized'
+#         }
+#     )
+#     def get(self, request):
+#         user = request.user
+#         purchased_reports = PurchasedReport.objects.filter(client=user)
+#         total_spent = Transaction.objects.filter(order__client=user, confirmed=True).aggregate(total=Sum('amount'))['total'] or 0
+#         recent_purchases = purchased_reports.order_by('-purchased_on')[:5]
+        
+#         data = {
+#             'total_reports_purchased': purchased_reports.count(),
+#             'total_amount_spent': float(total_spent),
+#             'recent_purchases': PurchasedReportSerializer(recent_purchases, many=True).data,
+#             'available_categories': ReportCategorySerializer(ReportCategory.objects.all(), many=True).data
+#         }
+#         return Response(data)
 class ClientDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsClientUser]
     
+    @swagger_auto_schema(
+        operation_description="Get dashboard summary for the authenticated client user.",
+        responses={
+            200: openapi.Response(
+                'Dashboard summary',
+                schema=openapi.Schema(type=openapi.TYPE_OBJECT)
+            ),
+            401: 'Unauthorized'
+        }
+    )
     def get(self, request):
         user = request.user
         purchased_reports = PurchasedReport.objects.filter(client=user)
         total_spent = Transaction.objects.filter(order__client=user, confirmed=True).aggregate(total=Sum('amount'))['total'] or 0
         recent_purchases = purchased_reports.order_by('-purchased_on')[:5]
         
+        # Prepare dashboard data
         data = {
             'total_reports_purchased': purchased_reports.count(),
             'total_amount_spent': float(total_spent),
             'recent_purchases': PurchasedReportSerializer(recent_purchases, many=True).data,
             'available_categories': ReportCategorySerializer(ReportCategory.objects.all(), many=True).data
         }
-        return Response(data)
+
+        # ✅ Wrap response in a message structure
+        return Response({
+            "message": "Client dashboard loaded successfully",
+            "data": data
+        })
 
 class ReportListView(generics.ListAPIView):
     serializer_class = ReportSerializer
     pagination_class = StandardResultsSetPagination
     permission_classes = [permissions.IsAuthenticated]
     
+    @swagger_auto_schema(
+        operation_description="List all active reports, with optional filters for search, category, and price.",
+        responses={
+            200: openapi.Response('List of reports', ReportSerializer(many=True)),
+            401: 'Unauthorized'
+        }
+    )
     def get_queryset(self):
         queryset = Report.objects.filter(is_active=True)
         search = self.request.query_params.get('search')
         category = self.request.query_params.get('category')
         min_price = self.request.query_params.get('min_price')
         max_price = self.request.query_params.get('max_price')
-        
+
         if search:
             queryset = queryset.filter(Q(title__icontains=search) | Q(description__icontains=search))
         if category:
@@ -89,12 +137,30 @@ class ReportListView(generics.ListAPIView):
                 queryset = queryset.filter(price__lte=float(max_price))
             except (ValueError, TypeError):
                 pass
-        
+
         return queryset.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return Response({
+            "message": "Reports loaded successfully",
+            "count": response.data["count"],
+            "next": response.data["next"],
+            "previous": response.data["previous"],
+            "data": response.data["results"]
+        })
 
 class ReportDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
+    @swagger_auto_schema(
+        operation_description="Retrieve details of a specific report, including purchase status.",
+        responses={
+            200: openapi.Response('Report details', ReportDetailSerializer),
+            404: 'Report not found',
+            401: 'Unauthorized'
+        }
+    )
     def get(self, request, report_id):
         report = get_object_or_404(Report, id=report_id, is_active=True)
         has_purchased = PurchasedReport.objects.filter(client=request.user, report=report).exists()
@@ -103,25 +169,83 @@ class ReportDetailView(APIView):
         data['has_purchased'] = has_purchased
         return Response(data)
 
+# class CreateOrderView(APIView):
+#     permission_classes = [permissions.IsAuthenticated, IsClientUser]
+    
+#     @swagger_auto_schema(
+#         operation_description="Create a new order for reports.",
+#         request_body=OrderSerializer,
+#         responses={
+#             201: openapi.Response('Order created', OrderSerializer),
+#             400: 'Invalid input data',
+#             401: 'Unauthorized'
+#         }
+#     )
+#     def post(self, request):
+#         serializer = OrderSerializer(data=request.data, context={'request': request})
+#         if serializer.is_valid():
+#             order = serializer.save()
+#             send_order_confirmation_email(order)
+#             return Response({
+#                 'order_id': order.id,
+#                 'order_number': str(order.order_number),
+#                 'total_price': float(order.total_price),
+#                 'status': order.status
+#             }, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class CreateOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsClientUser]
     
+    @swagger_auto_schema(
+        operation_description="Create a new order for reports.",
+        request_body=OrderSerializer,
+        responses={
+            201: openapi.Response('Order created', OrderSerializer),
+            400: 'Invalid input data',
+            401: 'Unauthorized'
+        }
+    )
     def post(self, request):
         serializer = OrderSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             order = serializer.save()
             send_order_confirmation_email(order)
+
             return Response({
-                'order_id': order.id,
-                'order_number': str(order.order_number),
-                'total_price': float(order.total_price),
-                'status': order.status
+                "message": "Order created successfully",
+                "data": {
+                    "order_id": order.id,
+                    "order_number": str(order.order_number),
+                    "total_price": float(order.total_price),
+                    "status": order.status
+                }
             }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            "message": "Order creation failed",
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 class ProcessPaymentView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsClientUser]
     
+    @swagger_auto_schema(
+        operation_description="Process payment for an order using Mpesa, Stripe, or Paystack.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'payment_method': openapi.Schema(type=openapi.TYPE_STRING, description='Payment method (mpesa, stripe, paystack)'),
+                'payment_method_id': openapi.Schema(type=openapi.TYPE_STRING, description='Stripe payment method ID (if using stripe)')
+            },
+            required=['payment_method']
+        ),
+        responses={
+            200: 'Payment successful or initiated',
+            400: 'Invalid payment method or error',
+            401: 'Unauthorized',
+            404: 'Order not found'
+        }
+    )
     @method_decorator(csrf_exempt)
     def post(self, request, order_id):
         order = get_object_or_404(Order, id=order_id, client=request.user)
@@ -216,32 +340,113 @@ class ProcessPaymentView(APIView):
             logger.error(f"Payment error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+# class MpesaCallbackView(APIView):
+#     @swagger_auto_schema(
+#         operation_description="Callback endpoint for Mpesa payment confirmation.",
+#         responses={
+#             200: 'Callback processed',
+#             400: 'Callback error'
+#         }
+#     )
+#     @method_decorator(csrf_exempt)
+#     def post(self, request):
+#         try:
+#             data = request.data.get('Body', {}).get('stkCallback', {})
+#             transaction_id = data.get('CheckoutRequestID')
+#             result_code = data.get('ResultCode')
+            
+#             if result_code == '0':
+#                 transaction = Transaction.objects.get(transaction_id=transaction_id)
+#                 transaction.confirmed = True
+#                 transaction.paid_at = timezone.now()
+#                 transaction.save()
+#                 order = transaction.order
+#                 order.status = 'paid'
+#                 order.save()
+#                 for item in order.items.all():
+#                     PurchasedReport.objects.get_or_create(client=order.client, report=item.report)
+#                 send_payment_success_email(transaction)
+#                 logger.info(f"M-Pesa payment confirmed: {transaction_id}")
+#             return Response({'status': 'ok'})
+#         except Exception as e:
+#             logger.error(f"M-Pesa callback error: {str(e)}")
+#             return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
+from rest_framework.permissions import AllowAny
+
 class MpesaCallbackView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Callback endpoint for Mpesa payment confirmation.",
+        responses={
+            200: 'Callback processed',
+            400: 'Callback error'
+        }
+    )
     @method_decorator(csrf_exempt)
     def post(self, request):
         try:
             data = request.data.get('Body', {}).get('stkCallback', {})
             transaction_id = data.get('CheckoutRequestID')
-            result_code = data.get('ResultCode')
-            
-            if result_code == '0':
+            result_code = str(data.get('ResultCode'))
+            result_desc = data.get('ResultDesc', 'No description provided')
+
+            # ✅ Handle missing transaction gracefully
+            try:
                 transaction = Transaction.objects.get(transaction_id=transaction_id)
-                transaction.confirmed = True
-                transaction.paid_at = timezone.now()
+            except Transaction.DoesNotExist:
+                logger.error(f"M-Pesa callback error: Transaction {transaction_id} not found")
+                return Response(
+                    {'ResultCode': 1, 'ResultDesc': 'Transaction not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # ✅ Handle failed payments clearly and save reason
+            if result_code != '0':
+                transaction.failure_reason = result_desc   # 🔹 log failure reason in DB
                 transaction.save()
-                order = transaction.order
-                order.status = 'paid'
-                order.save()
-                for item in order.items.all():
-                    PurchasedReport.objects.get_or_create(client=order.client, report=item.report)
-                send_payment_success_email(transaction)
-                logger.info(f"M-Pesa payment confirmed: {transaction_id}")
-            return Response({'status': 'ok'})
+                logger.warning(f"M-Pesa payment failed for transaction {transaction_id}: {result_desc}")
+                return Response(
+                    {'ResultCode': 1, 'ResultDesc': 'Payment Failed'},
+                    status=status.HTTP_200_OK
+                )
+
+            # ✅ Process successful payment
+            transaction.confirmed = True
+            transaction.paid_at = timezone.now()
+            transaction.failure_reason = None  # 🔹 Clear failure reason on success
+            transaction.save()
+
+            order = transaction.order
+            order.status = 'paid'
+            order.save()
+
+            # Grant access to purchased reports
+            for item in order.items.all():
+                PurchasedReport.objects.get_or_create(client=order.client, report=item.report)
+
+            send_payment_success_email(transaction)
+            logger.info(f"M-Pesa payment confirmed: {transaction_id}")
+
+            # ✅ Return Safaricom-friendly response to stop retries
+            return Response({'ResultCode': 0, 'ResultDesc': 'Accepted'}, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.error(f"M-Pesa callback error: {str(e)}")
-            return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'ResultCode': 1, 'ResultDesc': 'Processing error'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
 class PaystackCallbackView(APIView):
+    @swagger_auto_schema(
+        operation_description="Callback endpoint for Paystack payment confirmation.",
+        responses={
+            200: 'Callback processed',
+            400: 'Callback error'
+        }
+    )
     @method_decorator(csrf_exempt)
     def post(self, request):
         try:
@@ -276,12 +481,27 @@ class MyPurchasesView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsClientUser]
     pagination_class = StandardResultsSetPagination
     
+    @swagger_auto_schema(
+        operation_description="List all reports purchased by the authenticated client.",
+        responses={
+            200: openapi.Response('List of purchased reports', PurchasedReportSerializer(many=True)),
+            401: 'Unauthorized'
+        }
+    )
     def get_queryset(self):
         return PurchasedReport.objects.filter(client=self.request.user).order_by('-purchased_on')
 
 class SecureReportViewerView(APIView):
     permission_classes = [permissions.IsAuthenticated, HasPurchasedReport]
     
+    @swagger_auto_schema(
+        operation_description="Serve a watermarked PDF report to the user if purchased.",
+        responses={
+            200: 'PDF file response',
+            404: 'File not found',
+            500: 'Unable to serve report'
+        }
+    )
     def get(self, request, report_id):
         try:
             report = get_object_or_404(Report, id=report_id)
@@ -313,6 +533,13 @@ class SecureReportViewerView(APIView):
 class AdminDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsManagementUser]
     
+    @swagger_auto_schema(
+        operation_description="Get admin dashboard analytics and summaries.",
+        responses={
+            200: openapi.Response('Admin dashboard data', schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            401: 'Unauthorized'
+        }
+    )
     def get(self, request):
         today = timezone.now().date()
         last_30_days = today - timedelta(days=30)
@@ -368,15 +595,65 @@ class ManageReportsView(generics.ListCreateAPIView):
         
         return queryset.order_by('-created_at')
 
+    @swagger_auto_schema(
+        operation_description="Create a new report (admin only).",
+        request_body=ReportSerializer,
+        responses={
+            201: openapi.Response('Report created', ReportSerializer),
+            400: 'Invalid input data',
+            401: 'Unauthorized'
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
 class ManageReportDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReportSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageReports]
     queryset = Report.objects.all()
+    
+    @swagger_auto_schema(
+        operation_description="Update a report (admin only).",
+        request_body=ReportSerializer,
+        responses={
+            200: openapi.Response('Report updated', ReportSerializer),
+            400: 'Invalid input data',
+            401: 'Unauthorized',
+            404: 'Report not found'
+        }
+    )
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Partially update a report (admin only).",
+        request_body=ReportSerializer,
+        responses={
+            200: openapi.Response('Report updated', ReportSerializer),
+            400: 'Invalid input data',
+            401: 'Unauthorized',
+            404: 'Report not found'
+        }
+    )
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
 
 class ManageCategoriesView(generics.ListCreateAPIView):
     serializer_class = ReportCategorySerializer
     permission_classes = [permissions.IsAuthenticated, CanManageReports]
     queryset = ReportCategory.objects.all()
+    
+    @swagger_auto_schema(
+        operation_description="Create a new report category (admin only).",
+        request_body=ReportCategorySerializer,
+        responses={
+            201: openapi.Response('Category created', ReportCategorySerializer),
+            400: 'Invalid input data',
+            401: 'Unauthorized'
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 class ManageOrdersView(generics.ListAPIView):
     serializer_class = OrderSummarySerializer
@@ -426,6 +703,13 @@ class ManageClientsView(generics.ListAPIView):
 class RevenueAnalyticsView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsManagementUser]
     
+    @swagger_auto_schema(
+        operation_description="Get revenue analytics for the admin dashboard.",
+        responses={
+            200: openapi.Response('Revenue analytics', schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            401: 'Unauthorized'
+        }
+    )
     def get(self, request):
         today = timezone.now().date()
         twelve_months_ago = today - timedelta(days=365)
@@ -503,6 +787,7 @@ class PublicCategoriesView(generics.ListAPIView):
     serializer_class = ReportCategorySerializer
     permission_classes = []  # No authentication required
     queryset = ReportCategory.objects.all()
+    
 
 # Payment utility functions
 def get_mpesa_access_token():

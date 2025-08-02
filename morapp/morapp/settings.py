@@ -10,8 +10,15 @@ SECRET_KEY = 'django-insecure-sw8zlor!&!*r7k1c@__+81fw&x*t325_nkg2&p3(j#7p^@0&g6
 DEBUG = True
 # ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
-ALLOWED_HOSTS = ["564f795cf40f.ngrok-free.app", "127.0.0.1"]
-CSRF_TRUSTED_ORIGINS = ["https://564f795cf40f.ngrok-free.app"]
+ALLOWED_HOSTS = [
+    "64f7c2b6acc4.ngrok-free.app",
+    "564f795cf40f.ngrok-free.app",
+    "127.0.0.1",
+    "localhost"
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://64f7c2b6acc4.ngrok-free.app"
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -114,12 +121,14 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# CORS settings
+    
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
-    'https://yourdomain.com',  # Update for production
+    'https://64f7c2b6acc4.ngrok-free.app',
+    
 ]
 CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_ALL_ORIGINS = True  # (for dev only)
 
 # Social authentication
 AUTHENTICATION_BACKENDS = (
@@ -143,11 +152,11 @@ DEFAULT_FROM_EMAIL = 'noreply@yourcompany.com'
 
 # Payment Gateway Settings
 MPESA_ENVIRONMENT = 'sandbox'
-MPESA_CONSUMER_KEY = 'your_mpesa_consumer_key'  # Replace with your actual key
-MPESA_CONSUMER_SECRET = 'your_mpesa_consumer_secret'  # Replace with your actual secret
-MPESA_SHORTCODE = 'your_mpesa_shortcode'  # Replace with your actual shortcode
-MPESA_PASSKEY = 'your_mpesa_passkey'  # Replace with your actual passkey
-MPESA_CALLBACK_URL = 'https://e0163f85d8f0.ngrok-free.app/api/client/mpesa/callback/'
+MPESA_CONSUMER_KEY = 'yYTV8gEVa16iL0GLAKJAqXV71bzgCNZl24Nr2AmN5AAj5zfr'
+MPESA_CONSUMER_SECRET = 'mp25ToOvSW4uKotaHaHviXTWbZEkFGHrMZG5vdK5KcyTmKDLN2tsDisPusWRJROj'
+MPESA_SHORTCODE = '174379'  # Standard sandbox shortcode
+MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'  # Standard sandbox passkey
+MPESA_CALLBACK_URL = 'https://64f7c2b6acc4.ngrok-free.app/mpesa/callback/'
 STRIPE_PUBLISHABLE_KEY = 'your_stripe_publishable_key'  # Replace with your actual key
 STRIPE_SECRET_KEY = 'your_stripe_secret_key'  # Replace with your actual key
 PAYSTACK_SECRET_KEY = 'your_paystack_secret_key'  # Replace with your actual key

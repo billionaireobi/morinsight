@@ -137,9 +137,10 @@ class Transaction(models.Model):
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES)
     paid_at = models.DateTimeField(auto_now_add=True)
     confirmed = models.BooleanField(default=False)
-
+    failure_reason = models.TextField(null=True, blank=True)
+    
     def __str__(self):
-        return f"{self.transaction_id} - {self.amount}"
+        return f"{self.transaction_id} - {'Confirmed' if self.confirmed else 'Pending'}"
 
 # ========================
 # PURCHASED REPORTS (Access Control)

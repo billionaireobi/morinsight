@@ -122,21 +122,54 @@ class ResetPasswordSerializer(serializers.Serializer):
         if not re.search(r'[0-9]', value):
             raise serializers.ValidationError("Password must contain at least one number")
         return value
-
 class ManageUserProfileSerializer(serializers.ModelSerializer):
-    profile_type = serializers.ChoiceField(choices=UserProfile.PROFILE_TYPE_CHOICES)
+    # ✅ Include user fields
+    username = serializers.CharField(source='user.username', required=False)
+    email = serializers.EmailField(source='user.email', required=False)
 
     class Meta:
         model = UserProfile
-        fields = ['profile_type']
+        fields = ['username', 'email', 'profile_type', 'phone', 'gender']
 
     def update(self, instance, validated_data):
-        profile_type = validated_data.get('profile_type')
-        instance.profile_type = profile_type
-        instance.save()
+        # ✅ Update related user model fields if provided
+        user_data = validated_data.pop('user', {})
         user = instance.user
+
+        if 'username' in user_data:
+            user.username = user_data['username']
+        if 'email' in user_data:
+            user.email = user_data['email']
+        user.save()
+
+        # ✅ Update UserProfile fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # ✅ Handle group assignment based on profile_type
+        profile_type = validated_data.get('profile_type', instance.profile_type)
         user.groups.clear()
         group_name = 'Management' if profile_type == 'Management' else 'Clients'
         group = Group.objects.get_or_create(name=group_name)[0]
         user.groups.add(group)
+
         return instance
+
+# class ManageUserProfileSerializer(serializers.ModelSerializer):
+#     profile_type = serializers.ChoiceField(choices=UserProfile.PROFILE_TYPE_CHOICES)
+
+#     class Meta:
+#         model = UserProfile
+#         fields = ['profile_type']
+
+#     def update(self, instance, validated_data):
+#         profile_type = validated_data.get('profile_type')
+#         instance.profile_type = profile_type
+#         instance.save()
+#         user = instance.user
+#         user.groups.clear()
+#         group_name = 'Management' if profile_type == 'Management' else 'Clients'
+#         group = Group.objects.get_or_create(name=group_name)[0]
+#         user.groups.add(group)
+#         return instance
